@@ -27,6 +27,11 @@ ENV/
 
 # Environment variables
 .env
+.env.local
+
+# Database
+*.db
+*.db-journal
 
 # IDE
 .vscode/

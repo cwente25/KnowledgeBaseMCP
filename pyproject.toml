@@ -1,22 +1,48 @@
 [project]
 name = "knowledge-base-mcp"
-version = "0.1.0"
-description = "MCP server for managing a personal markdown-based knowledge base"
+version = "0.2.0"
+description = "MCP server with HTTP API for personal knowledge base"
 requires-python = ">=3.11"
 dependencies = [
+    # Phase 1 - MCP Server
     "mcp>=1.1.0",
     "pyyaml>=6.0",
     "python-dotenv>=1.0.0",
+
+    # Phase 2 - HTTP API
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "python-multipart>=0.0.6",
+
+    # Database
+    "sqlalchemy>=2.0.0",
+    "alembic>=1.12.0",
+
+    # Authentication
+    "pyjwt>=2.10.0",
+    "passlib[bcrypt]>=1.7.4",
+    "email-validator>=2.0.0",
+
+    # AI Integration
+    "anthropic>=0.7.0",
+    "httpx>=0.25.0",
+
+    # Utilities
+    "pydantic>=2.5.0",
+    "pydantic-settings>=2.1.0",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest>=7.0",
     "pytest-asyncio>=0.21",
+    "pytest-cov>=4.1.0",
+    "faker>=20.0.0",
 ]
 
 [project.scripts]
 knowledge-base-server = "knowledge_base_mcp.server:main"
+knowledge-base-api = "api.main:run"
 
 [build-system]
 requires = ["hatchling"]
