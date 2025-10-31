@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knowledge Base - Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-md w-full space-y-8">
+            <!-- Header -->
+            <div>
+                <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+                    Knowledge Base
+                </h2>
+                <p class="mt-2 text-center text-sm text-gray-600">
+                    Your personal AI-powered second brain
+                </p>
+            </div>
+
+            <!-- Login Form -->
+            <form class="mt-8 space-y-6" id="loginForm">
+                <div class="rounded-md shadow-sm -space-y-px">
+                    <div>
+                        <label for="email" class="sr-only">Email address</label>
+                        <input id="email" name="email" type="email" required
+                            class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                            placeholder="Email address">
+                    </div>
+                    <div>
+                        <label for="password" class="sr-only">Password</label>
+                        <input id="password" name="password" type="password" required
+                            class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                            placeholder="Password">
+                    </div>
+                </div>
+
+                <!-- Error Message -->
+                <div id="errorMessage" class="hidden rounded-md bg-red-50 p-4">
+                    <div class="flex">
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-red-800" id="errorText"></h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div>
+                    <button type="submit" id="loginButton"
+                        class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Sign in
+                    </button>
+                </div>
+
+                <!-- Sign Up Link -->
+                <div class="text-center">
+                    <p class="text-sm text-gray-600">
+                        Don't have an account?
+                        <a href="#" id="signupLink" class="font-medium text-indigo-600 hover:text-indigo-500">
+                            Sign up
+                        </a>
+                    </p>
+                </div>
+            </form>
+
+            <!-- Sign Up Form (Hidden by default) -->
+            <form class="mt-8 space-y-6 hidden" id="signupForm">
+                <div class="rounded-md shadow-sm -space-y-px">
+                    <div>
+                        <input id="signupName" name="name" type="text" required
+                            class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                            placeholder="Full Name">
+                    </div>
+                    <div>
+                        <input id="signupEmail" name="email" type="email" required
+                            class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                            placeholder="Email address">
+                    </div>
+                    <div>
+                        <input id="signupPassword" name="password" type="password" required minlength="8"
+                            class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                            placeholder="Password (min 8 characters)">
+                    </div>
+                </div>
+
+                <div>
+                    <button type="submit" id="signupButton"
+                        class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Create Account
+                    </button>
+                </div>
+
+                <div class="text-center">
+                    <p class="text-sm text-gray-600">
+                        Already have an account?
+                        <a href="#" id="loginLink" class="font-medium text-indigo-600 hover:text-indigo-500">
+                            Sign in
+                        </a>
+                    </p>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="module">
+        import { login, signup } from './static/js/auth.js';
+
+        const loginForm = document.getElementById('loginForm');
+        const signupForm = document.getElementById('signupForm');
+        const errorMessage = document.getElementById('errorMessage');
+        const errorText = document.getElementById('errorText');
+
+        // Toggle between login and signup
+        document.getElementById('signupLink').addEventListener('click', (e) => {
+            e.preventDefault();
+            loginForm.classList.add('hidden');
+            signupForm.classList.remove('hidden');
+            errorMessage.classList.add('hidden');
+        });
+
+        document.getElementById('loginLink').addEventListener('click', (e) => {
+            e.preventDefault();
+            signupForm.classList.add('hidden');
+            loginForm.classList.remove('hidden');
+            errorMessage.classList.add('hidden');
+        });
+
+        // Handle login
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                document.getElementById('loginButton').disabled = true;
+                document.getElementById('loginButton').textContent = 'Signing in...';
+
+                await login(email, password);
+                window.location.href = '/chat.html';
+            } catch (error) {
+                errorText.textContent = error.message || 'Login failed. Please try again.';
+                errorMessage.classList.remove('hidden');
+            } finally {
+                document.getElementById('loginButton').disabled = false;
+                document.getElementById('loginButton').textContent = 'Sign in';
+            }
+        });
+
+        // Handle signup
+        signupForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('signupName').value;
+            const email = document.getElementById('signupEmail').value;
+            const password = document.getElementById('signupPassword').value;
+
+            try {
+                document.getElementById('signupButton').disabled = true;
+                document.getElementById('signupButton').textContent = 'Creating account...';
+
+                await signup(email, password, name);
+                // Auto-login after signup
+                await login(email, password);
+                window.location.href = '/chat.html';
+            } catch (error) {
+                errorText.textContent = error.message || 'Signup failed. Please try again.';
+                errorMessage.classList.remove('hidden');
+            } finally {
+                document.getElementById('signupButton').disabled = false;
+                document.getElementById('signupButton').textContent = 'Create Account';
+            }
+        });
+    </script>
+</body>
+</html>

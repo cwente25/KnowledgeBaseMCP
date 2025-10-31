@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knowledge Base - Home</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-indigo-50 to-blue-50">
+    <div class="min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="bg-white shadow-sm">
+            <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between h-16 items-center">
+                    <div class="flex items-center">
+                        <h1 class="text-2xl font-bold text-indigo-600">Knowledge Base</h1>
+                    </div>
+                    <div>
+                        <a href="/login.html" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                            Get Started
+                        </a>
+                    </div>
+                </div>
+            </nav>
+        </header>
+
+        <!-- Hero Section -->
+        <main class="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8">
+            <div class="max-w-4xl mx-auto text-center">
+                <h2 class="text-5xl font-extrabold text-gray-900 sm:text-6xl mb-6">
+                    Your Personal
+                    <span class="text-indigo-600">Second Brain</span>
+                </h2>
+                <p class="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+                    Store, search, and interact with your knowledge using AI. Access your notes from anywhere with intelligent assistance.
+                </p>
+
+                <!-- Features -->
+                <div class="grid md:grid-cols-3 gap-8 mt-12">
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <div class="text-4xl mb-4">📝</div>
+                        <h3 class="text-lg font-semibold mb-2">Organize Notes</h3>
+                        <p class="text-gray-600 text-sm">
+                            Store notes in categories with tags and metadata. Keep everything organized and accessible.
+                        </p>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <div class="text-4xl mb-4">🔍</div>
+                        <h3 class="text-lg font-semibold mb-2">Smart Search</h3>
+                        <p class="text-gray-600 text-sm">
+                            Full-text search across all your notes. Find exactly what you need, when you need it.
+                        </p>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <div class="text-4xl mb-4">🤖</div>
+                        <h3 class="text-lg font-semibold mb-2">AI Assistant</h3>
+                        <p class="text-gray-600 text-sm">
+                            Chat with AI about your notes. Ask questions, create summaries, and get insights.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- CTA -->
+                <div class="mt-12">
+                    <a href="/login.html" class="inline-flex items-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 md:text-lg">
+                        Start Using Knowledge Base →
+                    </a>
+                </div>
+
+                <!-- Tech Stack -->
+                <div class="mt-12 pt-8 border-t border-gray-200">
+                    <p class="text-sm text-gray-500 mb-4">Built with</p>
+                    <div class="flex justify-center space-x-8 text-sm text-gray-600">
+                        <span>FastAPI</span>
+                        <span>•</span>
+                        <span>Claude AI</span>
+                        <span>•</span>
+                        <span>SQLite/PostgreSQL</span>
+                        <span>•</span>
+                        <span>MCP Protocol</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-white mt-12">
+            <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+                <p class="text-center text-gray-500 text-sm">
+                    Knowledge Base © 2025 | Your personal AI-powered knowledge management system
+                </p>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Redirect to chat if already logged in
+        if (localStorage.getItem('jwt_token')) {
+            window.location.href = '/chat.html';
+        }
+    </script>
+</body>
+</html>

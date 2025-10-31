@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knowledge Base - Chat</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .chat-container {
+            height: calc(100vh - 64px);
+        }
+        .sidebar {
+            height: calc(100vh - 64px);
+            overflow-y: auto;
+        }
+        .chat-messages {
+            height: calc(100vh - 200px);
+            overflow-y: auto;
+        }
+        .user-message {
+            background-color: #4F46E5;
+            color: white;
+        }
+        .ai-message {
+            background-color: #F3F4F6;
+            color: #1F2937;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- Header -->
+    <header class="bg-white shadow-sm">
+        <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <h1 class="text-xl font-bold text-gray-900">Knowledge Base</h1>
+            <div class="flex items-center space-x-4">
+                <span id="userName" class="text-sm text-gray-600"></span>
+                <button id="logoutBtn" class="text-sm text-indigo-600 hover:text-indigo-700">Logout</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex chat-container">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-white shadow-md sidebar hidden lg:block">
+            <div class="p-4">
+                <h2 class="text-lg font-semibold mb-4">Categories</h2>
+                <div id="categoriesList" class="space-y-2">
+                    <!-- Categories will be loaded here -->
+                </div>
+
+                <h2 class="text-lg font-semibold mt-6 mb-4">Recent Notes</h2>
+                <div id="recentNotes" class="space-y-2">
+                    <!-- Recent notes will be loaded here -->
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Chat Area -->
+        <main class="flex-1 flex flex-col bg-white">
+            <!-- Chat Messages -->
+            <div class="chat-messages flex-1 p-4 space-y-4" id="chatMessages">
+                <!-- Welcome message -->
+                <div class="ai-message p-4 rounded-lg max-w-3xl">
+                    <p class="text-sm font-medium mb-1">AI Assistant</p>
+                    <p>👋 Welcome to your Knowledge Base! I can help you:</p>
+                    <ul class="list-disc ml-6 mt-2">
+                        <li>Search your notes</li>
+                        <li>Create new notes</li>
+                        <li>Answer questions about your knowledge</li>
+                        <li>Organize and summarize information</li>
+                    </ul>
+                    <p class="mt-2">Try asking: "What notes do I have?" or "Create a note about..."</p>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="border-t p-4">
+                <form id="chatForm" class="flex space-x-2">
+                    <input
+                        type="text"
+                        id="messageInput"
+                        placeholder="Ask me anything about your notes..."
+                        class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        required
+                    />
+                    <button
+                        type="submit"
+                        id="sendButton"
+                        class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                        Send
+                    </button>
+                </form>
+                <div class="mt-2 flex justify-between items-center text-xs text-gray-500">
+                    <span>Press Enter to send</span>
+                    <button id="newChatBtn" class="text-indigo-600 hover:text-indigo-700">New Conversation</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Note Modal -->
+    <div id="noteModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-2xl shadow-lg rounded-md bg-white">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="modalTitle" class="text-lg font-semibold">Note Details</h3>
+                <button id="closeModal" class="text-gray-600 hover:text-gray-900">&times;</button>
+            </div>
+            <div id="modalContent" class="space-y-2">
+                <!-- Note content will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { requireAuth, logout } from './static/js/auth.js';
+        import { api } from './static/js/api.js';
+
+        // Check authentication
+        await requireAuth();
+
+        let conversationId = null;
+        let currentUser = null;
+
+        // Load user info
+        async function loadUser() {
+            try {
+                currentUser = await api.getCurrentUser();
+                document.getElementById('userName').textContent = currentUser.full_name || currentUser.email;
+            } catch (error) {
+                console.error('Failed to load user:', error);
+            }
+        }
+
+        // Load categories
+        async function loadCategories() {
+            try {
+                const data = await api.getCategories();
+                const container = document.getElementById('categoriesList');
+                container.innerHTML = data.categories.map(cat => `
+                    <div class="p-2 hover:bg-gray-100 rounded cursor-pointer" onclick="filterByCategory('${cat.name}')">
+                        <span class="text-sm">${cat.name}</span>
+                        <span class="text-xs text-gray-500 float-right">${cat.count}</span>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Failed to load categories:', error);
+            }
+        }
+
+        // Load recent notes
+        async function loadRecentNotes() {
+            try {
+                const notes = await api.getNotes({ limit: 5 });
+                const container = document.getElementById('recentNotes');
+                container.innerHTML = notes.slice(0, 5).map(note => `
+                    <div class="p-2 hover:bg-gray-100 rounded cursor-pointer text-sm truncate" onclick="showNote('${note.id}')">
+                        ${note.title}
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Failed to load recent notes:', error);
+            }
+        }
+
+        // Show note in modal
+        window.showNote = async function(noteId) {
+            try {
+                const note = await api.getNote(noteId);
+                const modal = document.getElementById('noteModal');
+                document.getElementById('modalTitle').textContent = note.title;
+                document.getElementById('modalContent').innerHTML = `
+                    <p><strong>Category:</strong> ${note.category}</p>
+                    <p><strong>Tags:</strong> ${note.tags.join(', ') || 'None'}</p>
+                    <p><strong>Created:</strong> ${new Date(note.created_at).toLocaleString()}</p>
+                    <div class="mt-4">
+                        <strong>Content:</strong>
+                        <pre class="mt-2 whitespace-pre-wrap bg-gray-50 p-3 rounded">${note.content}</pre>
+                    </div>
+                `;
+                modal.classList.remove('hidden');
+            } catch (error) {
+                alert('Failed to load note: ' + error.message);
+            }
+        };
+
+        // Close modal
+        document.getElementById('closeModal').addEventListener('click', () => {
+            document.getElementById('noteModal').classList.add('hidden');
+        });
+
+        // Filter by category
+        window.filterByCategory = async function(category) {
+            addMessage(`Show me all notes in ${category}`, true);
+            try {
+                const notes = await api.getNotes({ category });
+                let response = `Found ${notes.length} notes in "${category}":\n\n`;
+                notes.forEach(note => {
+                    response += `• ${note.title}\n`;
+                });
+                addMessage(response, false);
+            } catch (error) {
+                addMessage('Failed to load notes: ' + error.message, false);
+            }
+        };
+
+        // Add message to chat
+        function addMessage(text, isUser) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `${isUser ? 'user-message ml-auto' : 'ai-message'} p-4 rounded-lg max-w-3xl`;
+
+            if (!isUser) {
+                messageDiv.innerHTML = `<p class="text-sm font-medium mb-1">AI Assistant</p><p class="whitespace-pre-wrap">${text}</p>`;
+            } else {
+                messageDiv.innerHTML = `<p class="text-sm font-medium mb-1">You</p><p class="whitespace-pre-wrap">${text}</p>`;
+            }
+
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Handle chat form submission
+        document.getElementById('chatForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+
+            if (!message) return;
+
+            // Add user message
+            addMessage(message, true);
+            input.value = '';
+
+            // Disable send button
+            const sendBtn = document.getElementById('sendButton');
+            sendBtn.disabled = true;
+            sendBtn.textContent = 'Thinking...';
+
+            try {
+                const response = await api.chat(message, conversationId);
+                conversationId = response.conversation_id;
+
+                addMessage(response.response, false);
+
+                // Reload notes if any were accessed
+                if (response.notes_accessed && response.notes_accessed.length > 0) {
+                    await loadRecentNotes();
+                }
+            } catch (error) {
+                addMessage('Sorry, I encountered an error: ' + error.message, false);
+            } finally {
+                sendBtn.disabled = false;
+                sendBtn.textContent = 'Send';
+            }
+        });
+
+        // New conversation
+        document.getElementById('newChatBtn').addEventListener('click', () => {
+            conversationId = null;
+            document.getElementById('chatMessages').innerHTML = `
+                <div class="ai-message p-4 rounded-lg max-w-3xl">
+                    <p class="text-sm font-medium mb-1">AI Assistant</p>
+                    <p>Starting a new conversation. How can I help you today?</p>
+                </div>
+            `;
+        });
+
+        // Logout
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            if (confirm('Are you sure you want to logout?')) {
+                logout();
+            }
+        });
+
+        // Initialize
+        loadUser();
+        loadCategories();
+        loadRecentNotes();
+    </script>
+</body>
+</html>
