@@ -7,6 +7,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from unittest.mock import patch
 
 # Set test environment variables before importing app
 os.environ["DATABASE_URL"] = "sqlite:///:memory:"
@@ -15,10 +16,34 @@ os.environ["KNOWLEDGE_BASE_PATH"] = tempfile.mkdtemp()
 os.environ["ANTHROPIC_API_KEY"] = ""  # Disable AI for tests
 os.environ["DEBUG"] = "true"
 
-from api.main import app
-from api.database import Base, get_db
-from api.models import User, Note
-from api.auth import get_password_hash
+# Mock bcrypt to avoid initialization issues in test environment
+import hashlib
+
+def mock_hash(password: str) -> str:
+    """Simple hash for testing - not secure, only for tests"""
+    return hashlib.sha256(password.encode()).hexdigest()
+
+def mock_verify(plain: str, hashed: str) -> bool:
+    """Simple verify for testing"""
+    return mock_hash(plain) == hashed
+
+# Patch before importing app
+import sys
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+
+# Mock passlib before it's imported
+from unittest import mock
+with mock.patch("api.auth.pwd_context") as mock_pwd:
+    mock_pwd.hash = mock_hash
+    mock_pwd.verify = mock_verify
+    from api.main import app
+    from api.database import Base, get_db
+    from api.models import User, Note
+
+# Re-apply mocks to auth module
+import api.auth
+api.auth.pwd_context.hash = mock_hash
+api.auth.pwd_context.verify = mock_verify
 
 
 # Create test database engine
@@ -67,7 +92,7 @@ def test_user(test_db):
     """Create a test user in the database"""
     user = User(
         email="test@example.com",
-        hashed_password=get_password_hash("testpass"),
+        hashed_password=mock_hash("testpass"),
         full_name="Test User"
     )
     test_db.add(user)
