@@ -20,22 +20,27 @@ class KnowledgeBaseSearch:
     def search(
         self,
         query: str = "",
-        category: Optional[str] = None,
-        tags: Optional[list[str]] = None
+        category_path: Optional[str] = None,
+        tags: Optional[list[str]] = None,
+        recursive: bool = True
     ) -> list[SearchResult]:
         """
         Search through all notes.
 
         Args:
             query: Search term (searches title, content, tags) - case insensitive
-            category: Optional category filter
+            category_path: Optional category path filter (e.g., "work/clients")
             tags: Optional list of tags to filter by (matches any)
+            recursive: If True, search in subcategories too (default: True)
 
         Returns:
             List of SearchResult objects sorted by relevance
         """
-        # Get all notes (potentially filtered by category)
-        all_notes = self.storage.list_notes(category=category)
+        # Get all notes (potentially filtered by category path)
+        all_notes = self.storage.list_notes(
+            category_path=category_path,
+            recursive=recursive
+        )
 
         results = []
 
@@ -109,21 +114,28 @@ class KnowledgeBaseSearch:
     def search_formatted(
         self,
         query: str = "",
-        category: Optional[str] = None,
-        tags: Optional[list[str]] = None
+        category_path: Optional[str] = None,
+        tags: Optional[list[str]] = None,
+        recursive: bool = True
     ) -> str:
         """
         Search and return formatted results as a string.
 
         Args:
             query: Search term
-            category: Optional category filter
+            category_path: Optional category path filter (e.g., "work/clients")
             tags: Optional list of tags to filter by
+            recursive: If True, search in subcategories too (default: True)
 
         Returns:
             Formatted search results string
         """
-        results = self.search(query=query, category=category, tags=tags)
+        results = self.search(
+            query=query,
+            category_path=category_path,
+            tags=tags,
+            recursive=recursive
+        )
 
         if not results:
             return "No results found."
