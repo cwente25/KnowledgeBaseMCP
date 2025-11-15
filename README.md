@@ -11,6 +11,7 @@ This MCP server provides AI-native access to a personal knowledge base stored as
 - Update and maintain notes with AI assistance
 - Keep all data in human-readable, portable markdown format
 - Access your notes from Claude Desktop, Claude Code, or any MCP-compatible client
+- **NEW:** Browse and edit notes via the included web UI
 
 ## Features
 
@@ -42,6 +43,13 @@ This MCP server provides AI-native access to a personal knowledge base stored as
   - Atomic file writes
   - Human-readable markdown format
   - No vendor lock-in
+
+- **Web UI** (Phase 2)
+  - Clean, dark-themed interface
+  - Category navigation and search
+  - Note creation and editing
+  - Authentication with JWT tokens
+  - Works on desktop and mobile browsers
 
 ## Installation
 
@@ -143,7 +151,57 @@ Add the server to your Claude Desktop configuration:
 
 After configuration, restart Claude Desktop.
 
+## Web UI Access
+
+The knowledge base includes a web interface for browsing and editing notes from any browser.
+
+### Starting the Web Server
+
+```bash
+# Make sure you're in the project directory
+cd knowledge-base-mcp
+
+# Start the FastAPI server (default port 8000)
+uvicorn api.main:app --host 0.0.0.0 --port 8000
+
+# Or use the configuration from .env
+python -m api.main
+```
+
+### First Time Setup
+
+1. Open your browser to `http://localhost:8000`
+2. Click "Create Account" to sign up
+3. Enter your email and password (minimum 8 characters)
+4. Login with your credentials
+5. Start creating and organizing notes!
+
+### Features
+
+- **Category Navigation**: Browse notes by category with note counts
+- **Full-Text Search**: Search across all notes and tags in real-time
+- **Note Editor**: Clean markdown editor with auto-save warnings
+- **Create/Edit/Delete**: Full CRUD operations on notes
+- **Tag Management**: Organize notes with comma-separated tags
+- **Responsive Design**: Works on desktop and mobile browsers
+
+### Mobile Access
+
+To access from your phone on the same network:
+
+```bash
+# Start server listening on all interfaces
+uvicorn api.main:app --host 0.0.0.0 --port 8000
+
+# Then access from phone using your computer's IP
+# Example: http://192.168.1.100:8000
+```
+
+For remote access, consider using Tailscale or deploying to a cloud service.
+
 ## Usage
+
+### MCP Tool Usage
 
 ### Example Interactions
 
