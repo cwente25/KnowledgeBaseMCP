@@ -36,10 +36,10 @@ app.include_router(search.router)
 app.include_router(chat.router)
 app.include_router(categories.router)
 
-# Mount static files if web directory exists
+# Mount web directory for static files (app.js, etc.)
 web_dir = Path(__file__).parent.parent.parent / "web"
 if web_dir.exists():
-    app.mount("/static", StaticFiles(directory=str(web_dir / "static")), name="static")
+    app.mount("/web", StaticFiles(directory=str(web_dir), html=True), name="web")
 
 
 @app.on_event("startup")
@@ -50,6 +50,15 @@ async def startup_event():
     print(f"✓ Knowledge base path: {settings.knowledge_base_path}")
     print(f"✓ Categories: {', '.join(settings.categories_list)}")
     print(f"✓ AI enabled: {bool(settings.anthropic_api_key)}")
+
+
+@app.get("/app.js")
+async def serve_app_js():
+    """Serve the web UI JavaScript file"""
+    app_js = Path(__file__).parent.parent.parent / "web" / "app.js"
+    if app_js.exists():
+        return FileResponse(app_js, media_type="application/javascript")
+    return {"error": "app.js not found"}
 
 
 @app.get("/", response_class=HTMLResponse)
