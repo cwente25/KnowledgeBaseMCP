@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..schemas import SearchResult, NoteResponse
-from ..auth import get_current_user
+from ..dependencies import get_optional_active_user
 from ..models import User
 from ..services.note_service import NoteService
 
@@ -19,12 +19,13 @@ async def search_notes(
     tags: Optional[str] = Query(None, description="Filter by tags (comma-separated)"),
     limit: int = Query(10, ge=1, le=100, description="Maximum number of results"),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: Optional[User] = Depends(get_optional_active_user)
 ):
     """
     Search notes using full-text search
 
-    Requires authentication. Returns notes ordered by relevance score.
+    Authentication optional (controlled by REQUIRE_AUTH setting).
+    Returns notes ordered by relevance score.
 
     The search uses the Phase 1 search engine which indexes title, content, and tags.
     """

@@ -30,7 +30,8 @@ app.add_middleware(
 )
 
 # Include routers
-app.include_router(auth.router)
+if settings.require_auth:
+    app.include_router(auth.router)
 app.include_router(notes.router)
 app.include_router(search.router)
 app.include_router(chat.router)
@@ -50,6 +51,7 @@ async def startup_event():
     print(f"✓ Knowledge base path: {settings.knowledge_base_path}")
     print(f"✓ Categories: {', '.join(settings.categories_list)}")
     print(f"✓ AI enabled: {bool(settings.anthropic_api_key)}")
+    print(f"✓ Authentication: {'enabled' if settings.require_auth else 'disabled'}")
 
 
 @app.get("/app.js")
@@ -70,17 +72,29 @@ async def root():
     if web_index.exists():
         return FileResponse(web_index)
 
+    # Build getting started steps based on auth status
+    auth_steps = ""
+    if settings.require_auth:
+        auth_steps = """
+                <li>Create an account: POST /auth/signup</li>
+                <li>Login: POST /auth/login</li>
+                <li>Use the returned token in Authorization header: Bearer &lt;token&gt;</li>
+"""
+
+    auth_status = "enabled" if settings.require_auth else "disabled"
+
     # Otherwise return API info
-    return """
+    return f"""
     <html>
         <head>
             <title>Knowledge Base API</title>
             <style>
-                body { font-family: sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
-                h1 { color: #333; }
-                a { color: #0066cc; text-decoration: none; }
-                a:hover { text-decoration: underline; }
-                .info { background: #f5f5f5; padding: 20px; border-radius: 5px; margin: 20px 0; }
+                body {{ font-family: sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }}
+                h1 {{ color: #333; }}
+                a {{ color: #0066cc; text-decoration: none; }}
+                a:hover {{ text-decoration: underline; }}
+                .info {{ background: #f5f5f5; padding: 20px; border-radius: 5px; margin: 20px 0; }}
+                .status {{ background: #e3f2fd; padding: 15px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #2196F3; }}
             </style>
         </head>
         <body>
@@ -89,6 +103,9 @@ async def root():
                 <p>Welcome to the Knowledge Base API!</p>
                 <p>This API provides access to your personal knowledge base with AI assistance.</p>
             </div>
+            <div class="status">
+                <p><strong>Status:</strong> Authentication is currently <strong>{auth_status}</strong></p>
+            </div>
             <h2>Quick Links</h2>
             <ul>
                 <li><a href="/docs">API Documentation (Swagger UI)</a></li>
@@ -96,10 +113,7 @@ async def root():
                 <li><a href="/health">Health Check</a></li>
             </ul>
             <h2>Getting Started</h2>
-            <ol>
-                <li>Create an account: POST /auth/signup</li>
-                <li>Login: POST /auth/login</li>
-                <li>Use the returned token in Authorization header: Bearer &lt;token&gt;</li>
+            <ol>{auth_steps}
                 <li>Start creating notes: POST /notes</li>
                 <li>Chat with AI: POST /chat</li>
             </ol>

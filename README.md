@@ -86,6 +86,129 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -e .
 ```
 
+## Running the Server
+
+This project provides **two ways** to run the knowledge base:
+
+### Option 1: MCP Server (for Claude Desktop/Code)
+
+The MCP server runs via stdio and is designed to be used with Claude Desktop or Claude Code.
+
+**Start the MCP server:**
+
+```bash
+# Using uv
+uv run knowledge-base-server
+
+# Using pip/venv
+knowledge-base-server
+```
+
+The MCP server will:
+- Listen on stdin/stdout for MCP protocol messages
+- Wait for commands from an MCP client (like Claude Desktop)
+- Not show a web interface or HTTP endpoint
+
+**Note:** The MCP server is typically not run standalone. Instead, configure it in Claude Desktop (see Configuration section below) and let Claude Desktop manage the server lifecycle.
+
+### Option 2: HTTP API Server (for Web/API Access)
+
+The HTTP API server provides a web interface and REST API.
+
+**Quick Start (No Authentication):**
+
+By default, authentication is **disabled** for easy local development. Just run:
+
+```bash
+# Using uv
+uv run knowledge-base-api
+
+# Using pip/venv
+knowledge-base-api
+
+# Or run directly with uvicorn
+uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
+```
+
+The API server will start on `http://localhost:8000` with:
+- **Web UI**: `http://localhost:8000` (if web files exist)
+- **API Docs**: `http://localhost:8000/docs` (Swagger UI)
+- **Alternative Docs**: `http://localhost:8000/redoc` (ReDoc)
+- **Health Check**: `http://localhost:8000/health`
+
+**Using the API (No Auth):**
+
+```bash
+# Create a note
+curl -X POST http://localhost:8000/notes \
+  -H "Content-Type: application/json" \
+  -d '{"title": "My Note", "content": "Hello World", "category": "people", "tags": ["test"]}'
+
+# List all notes
+curl http://localhost:8000/notes
+
+# Search notes
+curl "http://localhost:8000/search?q=hello"
+```
+
+**Optional: Enable Authentication**
+
+To enable authentication (recommended for production), create a `.env.local` file:
+
+```bash
+# Enable authentication
+REQUIRE_AUTH=true
+
+# Required when auth is enabled
+JWT_SECRET_KEY=your-secret-key-here-change-this-in-production
+
+# Optional - AI features
+ANTHROPIC_API_KEY=sk-ant-xxxxx
+
+# Optional - custom paths
+KNOWLEDGE_BASE_PATH=~/knowledge-base
+CATEGORIES=people,recipes,meetings,procedures,tasks
+
+# Optional - server settings
+API_HOST=0.0.0.0
+API_PORT=8000
+DEBUG=false
+```
+
+**Generate a secure JWT secret:**
+
+```bash
+# On Linux/macOS
+openssl rand -hex 32
+
+# Or use Python
+python -c "import secrets; print(secrets.token_hex(32))"
+```
+
+**Using the API with Authentication:**
+
+When `REQUIRE_AUTH=true`, you need to authenticate:
+
+1. Create an account:
+```bash
+curl -X POST http://localhost:8000/auth/signup \
+  -H "Content-Type: application/json" \
+  -d '{"email": "user@example.com", "password": "your-password", "full_name": "Your Name"}'
+```
+
+2. Login to get a token:
+```bash
+curl -X POST http://localhost:8000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "user@example.com", "password": "your-password"}'
+```
+
+3. Use the token for authenticated requests:
+```bash
+curl http://localhost:8000/notes \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
+```
+
 ## Configuration
 
 ### Environment Variables

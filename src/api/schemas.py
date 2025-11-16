@@ -9,7 +9,7 @@ from pydantic import BaseModel, EmailStr, Field
 class UserCreate(BaseModel):
     """Schema for creating a new user"""
     email: EmailStr
-    password: str = Field(..., min_length=8)
+    password: str = Field(..., min_length=8, max_length=72, description="Password (8-72 characters)")
     full_name: Optional[str] = None
 
 
