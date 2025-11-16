@@ -107,12 +107,51 @@ The MCP server will:
 
 The HTTP API server provides a web interface and REST API.
 
-**Required environment variables:**
+**Quick Start (No Authentication):**
 
-Create a `.env.local` file in the project root:
+By default, authentication is **disabled** for easy local development. Just run:
 
 ```bash
-# Required for API server
+# Using uv
+uv run knowledge-base-api
+
+# Using pip/venv
+knowledge-base-api
+
+# Or run directly with uvicorn
+uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
+```
+
+The API server will start on `http://localhost:8000` with:
+- **Web UI**: `http://localhost:8000` (if web files exist)
+- **API Docs**: `http://localhost:8000/docs` (Swagger UI)
+- **Alternative Docs**: `http://localhost:8000/redoc` (ReDoc)
+- **Health Check**: `http://localhost:8000/health`
+
+**Using the API (No Auth):**
+
+```bash
+# Create a note
+curl -X POST http://localhost:8000/notes \
+  -H "Content-Type: application/json" \
+  -d '{"title": "My Note", "content": "Hello World", "category": "people", "tags": ["test"]}'
+
+# List all notes
+curl http://localhost:8000/notes
+
+# Search notes
+curl "http://localhost:8000/search?q=hello"
+```
+
+**Optional: Enable Authentication**
+
+To enable authentication (recommended for production), create a `.env.local` file:
+
+```bash
+# Enable authentication
+REQUIRE_AUTH=true
+
+# Required when auth is enabled
 JWT_SECRET_KEY=your-secret-key-here-change-this-in-production
 
 # Optional - AI features
@@ -138,26 +177,9 @@ openssl rand -hex 32
 python -c "import secrets; print(secrets.token_hex(32))"
 ```
 
-**Start the HTTP API server:**
+**Using the API with Authentication:**
 
-```bash
-# Using uv
-uv run knowledge-base-api
-
-# Using pip/venv
-knowledge-base-api
-
-# Or run directly with uvicorn
-uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
-```
-
-The API server will start on `http://localhost:8000` with:
-- **Web UI**: `http://localhost:8000` (if web files exist)
-- **API Docs**: `http://localhost:8000/docs` (Swagger UI)
-- **Alternative Docs**: `http://localhost:8000/redoc` (ReDoc)
-- **Health Check**: `http://localhost:8000/health`
-
-**Using the API:**
+When `REQUIRE_AUTH=true`, you need to authenticate:
 
 1. Create an account:
 ```bash

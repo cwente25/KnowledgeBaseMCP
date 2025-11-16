@@ -22,7 +22,8 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:8000"
 
     # Authentication
-    jwt_secret_key: str
+    require_auth: bool = False  # Set to True to enable authentication
+    jwt_secret_key: str = "development-secret-key-change-in-production"
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 1440  # 24 hours
 

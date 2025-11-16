@@ -1,10 +1,11 @@
 """Categories routes"""
+from typing import Optional
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..schemas import CategoriesResponse, CategoryInfo
-from ..auth import get_current_user
+from ..dependencies import get_optional_active_user
 from ..models import User
 from ..services.note_service import NoteService
 
@@ -14,12 +15,13 @@ router = APIRouter(prefix="/categories", tags=["categories"])
 @router.get("/", response_model=CategoriesResponse)
 async def list_categories(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: Optional[User] = Depends(get_optional_active_user)
 ):
     """
     List all categories with note counts
 
-    Requires authentication. Returns all categories that have at least one note.
+    Authentication optional (controlled by REQUIRE_AUTH setting).
+    Returns all categories that have at least one note.
     """
     service = NoteService(db)
 
