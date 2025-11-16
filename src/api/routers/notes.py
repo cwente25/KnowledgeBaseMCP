@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..schemas import NoteCreate, NoteUpdate, NoteResponse
-from ..auth import get_current_user
+from ..dependencies import get_optional_active_user
 from ..models import User
 from ..services.note_service import NoteService
 
@@ -16,13 +16,13 @@ router = APIRouter(prefix="/notes", tags=["notes"])
 async def create_note(
     note_data: NoteCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: Optional[User] = Depends(get_optional_active_user)
 ):
     """
     Create a new note
 
-    Requires authentication. The note will be saved both to the database
-    and as a markdown file.
+    Authentication optional (controlled by REQUIRE_AUTH setting).
+    The note will be saved both to the database and as a markdown file.
     """
     service = NoteService(db)
 
@@ -33,7 +33,7 @@ async def create_note(
             category=note_data.category,
             tags=note_data.tags,
             metadata=note_data.metadata,
-            user_id=current_user.id
+            user_id=current_user.id if current_user else None
         )
         return note
     except ValueError as e:
@@ -50,12 +50,13 @@ async def list_notes(
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of results"),
     offset: int = Query(0, ge=0, description="Offset for pagination"),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: Optional[User] = Depends(get_optional_active_user)
 ):
     """
     List all notes with optional filters
 
-    Requires authentication. Returns notes ordered by creation date (newest first).
+    Authentication optional (controlled by REQUIRE_AUTH setting).
+    Returns notes ordered by creation date (newest first).
     """
     service = NoteService(db)
 
@@ -67,7 +68,7 @@ async def list_notes(
         tags=tag_list,
         limit=limit,
         offset=offset,
-        user_id=current_user.id
+        user_id=current_user.id if current_user else None
     )
 
     return notes
@@ -77,12 +78,12 @@ async def list_notes(
 async def get_note(
     note_id: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: Optional[User] = Depends(get_optional_active_user)
 ):
     """
     Get a specific note by ID
 
-    Requires authentication.
+    Authentication optional (controlled by REQUIRE_AUTH setting).
     """
     service = NoteService(db)
     note = service.get_note(note_id)
@@ -93,8 +94,8 @@ async def get_note(
             detail="Note not found"
         )
 
-    # Check if user owns the note (for single-user MVP, this is optional)
-    if note.user_id and note.user_id != current_user.id:
+    # Check if user owns the note (only when auth is enabled)
+    if current_user and note.user_id and note.user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to access this note"
@@ -108,12 +109,13 @@ async def update_note(
     note_id: str,
     note_data: NoteUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: Optional[User] = Depends(get_optional_active_user)
 ):
     """
     Update a note
 
-    Requires authentication. Only provided fields will be updated.
+    Authentication optional (controlled by REQUIRE_AUTH setting).
+    Only provided fields will be updated.
     """
     service = NoteService(db)
 
@@ -125,7 +127,8 @@ async def update_note(
             detail="Note not found"
         )
 
-    if existing_note.user_id and existing_note.user_id != current_user.id:
+    # Check ownership only when auth is enabled
+    if current_user and existing_note.user_id and existing_note.user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to update this note"
@@ -159,12 +162,13 @@ async def update_note(
 async def delete_note(
     note_id: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: Optional[User] = Depends(get_optional_active_user)
 ):
     """
     Delete a note
 
-    Requires authentication. Removes both the database entry and markdown file.
+    Authentication optional (controlled by REQUIRE_AUTH setting).
+    Removes both the database entry and markdown file.
     """
     service = NoteService(db)
 
@@ -176,7 +180,8 @@ async def delete_note(
             detail="Note not found"
         )
 
-    if existing_note.user_id and existing_note.user_id != current_user.id:
+    # Check ownership only when auth is enabled
+    if current_user and existing_note.user_id and existing_note.user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to delete this note"

@@ -16,8 +16,8 @@ from .schemas import TokenData
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# HTTP Bearer token scheme
-security = HTTPBearer()
+# HTTP Bearer token scheme (auto_error=False makes it optional)
+security = HTTPBearer(auto_error=False)
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -102,6 +102,51 @@ def get_current_user(
     Raises:
         HTTPException: If user is not found or token is invalid
     """
+    token = credentials.credentials
+    token_data = verify_token(token)
+
+    user = db.query(User).filter(User.email == token_data.email).first()
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    return user
+
+
+def get_optional_user(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
+    db: Session = Depends(get_db)
+) -> Optional[User]:
+    """
+    Get the current user if authentication is enabled and token is provided.
+    Returns None if authentication is disabled.
+
+    Args:
+        credentials: HTTP Bearer credentials from request (optional)
+        db: Database session
+
+    Returns:
+        Current user object if authenticated, None if auth is disabled
+
+    Raises:
+        HTTPException: If auth is required and token is invalid
+    """
+    # If authentication is not required, return None (no user context)
+    if not settings.require_auth:
+        return None
+
+    # If authentication is required but no credentials provided
+    if credentials is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required. Please provide a valid Bearer token.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # Validate the token
     token = credentials.credentials
     token_data = verify_token(token)
 
