@@ -47,11 +47,11 @@ if web_dir.exists():
 async def startup_event():
     """Initialize database on startup"""
     init_db()
-    print(f"✓ Database initialized")
-    print(f"✓ Knowledge base path: {settings.knowledge_base_path}")
-    print(f"✓ Categories: {', '.join(settings.categories_list)}")
-    print(f"✓ AI enabled: {bool(settings.anthropic_api_key)}")
-    print(f"✓ Authentication: {'enabled' if settings.require_auth else 'disabled'}")
+    print(f"[OK] Database initialized")
+    print(f"[OK] Knowledge base path: {settings.knowledge_base_path}")
+    print(f"[OK] Categories: {', '.join(settings.categories_list)}")
+    print(f"[OK] AI enabled: {bool(settings.anthropic_api_key)}")
+    print(f"[OK] Authentication: {'enabled' if settings.require_auth else 'disabled'}")
 
 
 @app.get("/app.js")
