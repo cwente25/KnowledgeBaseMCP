@@ -67,9 +67,14 @@ class NoteUpdate(BaseModel):
     metadata: Optional[Dict] = None
 
 
-class NoteResponse(NoteBase):
+class NoteResponse(BaseModel):
     """Schema for note response"""
     id: str
+    title: str = Field(..., min_length=1, max_length=500)
+    content: str
+    category: str = Field(..., min_length=1, max_length=100)
+    tags: List[str] = Field(default_factory=list)
+    metadata: Dict = Field(default_factory=dict, validation_alias='note_metadata')
     file_path: str
     created_at: datetime
     updated_at: datetime
@@ -77,6 +82,7 @@ class NoteResponse(NoteBase):
 
     class Config:
         from_attributes = True
+        populate_by_name = True
 
 
 # ============= Search Schemas =============
