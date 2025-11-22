@@ -67,7 +67,7 @@
         }
 
         .category {
-            padding: 8px 12px;
+            padding: 12px 16px;
             cursor: pointer;
             border-radius: 6px;
             margin-bottom: 4px;
@@ -76,10 +76,16 @@
             justify-content: space-between;
             align-items: center;
             color: #cccccc;
+            min-height: 48px;
         }
 
         .category:hover {
             background: #2a2d2e;
+        }
+
+        .category:active {
+            background: #094771;
+            transform: scale(0.98);
         }
 
         .category.active {
@@ -143,10 +149,16 @@
             padding: 16px 20px;
             border-bottom: 1px solid #3e3e42;
             cursor: pointer;
+            min-height: 48px;
         }
 
         .note-item:hover {
             background: #2a2d2e;
+        }
+
+        .note-item:active {
+            background: #094771;
+            transform: scale(0.98);
         }
 
         .note-item.active {
@@ -428,10 +440,314 @@
             justify-content: flex-end;
             margin-top: 20px;
         }
+
+        /* Mobile Navigation */
+        .mobile-header {
+            display: none;
+            padding: 12px 16px;
+            background: #252526;
+            border-bottom: 1px solid #3e3e42;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .mobile-header h1 {
+            font-size: 18px;
+            color: #e0e0e0;
+        }
+
+        .hamburger-btn {
+            background: none;
+            border: none;
+            color: #e0e0e0;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        .bottom-nav {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #252526;
+            border-top: 1px solid #3e3e42;
+            z-index: 100;
+        }
+
+        .bottom-nav-tabs {
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0;
+        }
+
+        .bottom-nav-tab {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 16px;
+            background: none;
+            border: none;
+            color: #858585;
+            font-size: 12px;
+            cursor: pointer;
+            flex: 1;
+        }
+
+        .bottom-nav-tab:hover {
+            color: #cccccc;
+        }
+
+        .bottom-nav-tab.active {
+            color: #007acc;
+        }
+
+        .bottom-nav-tab .tab-icon {
+            font-size: 20px;
+            margin-bottom: 4px;
+        }
+
+        /* Back button */
+        .back-btn {
+            background: none;
+            border: none;
+            color: #007acc;
+            font-size: 14px;
+            cursor: pointer;
+            padding: 4px 8px;
+        }
+
+        .back-btn:hover {
+            color: #1177bb;
+        }
+
+        /* Mobile editor styles */
+        .mobile-editor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid #3e3e42;
+            background: #252526;
+        }
+
+        .mobile-editor-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* Unsaved changes indicator */
+        .unsaved-indicator {
+            display: none;
+            width: 8px;
+            height: 8px;
+            background: #f14c4c;
+            border-radius: 50%;
+            margin-left: 8px;
+        }
+
+        .unsaved-indicator.show {
+            display: inline-block;
+        }
+
+        .mobile-editor-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 16px;
+            overflow-y: auto;
+        }
+
+        .mobile-editor-content .editor-title {
+            margin-bottom: 12px;
+            font-size: 16px;
+            padding: 8px;
+            height: 52px;
+            max-height: 52px;
+            overflow: hidden;
+        }
+
+        .mobile-editor-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .mobile-editor-content .editor-textarea {
+            flex: 1;
+            min-height: 200px;
+            margin-top: 12px;
+        }
+
+        /* Mobile Views */
+        .mobile-view {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .mobile-view.active {
+            display: flex;
+        }
+
+        /* Mobile Media Query */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .mobile-header {
+                display: flex;
+            }
+
+            .bottom-nav {
+                display: block;
+            }
+
+            /* Hide desktop layout */
+            .sidebar,
+            .notes-list,
+            .editor {
+                display: none;
+            }
+
+            /* Show mobile views */
+            .mobile-categories-view,
+            .mobile-notes-view,
+            .mobile-chat-view,
+            .mobile-editor-view {
+                display: none;
+                flex: 1;
+                overflow-y: auto;
+                padding-bottom: 60px; /* Space for bottom nav */
+            }
+
+            .mobile-categories-view.active,
+            .mobile-notes-view.active,
+            .mobile-chat-view.active,
+            .mobile-editor-view.active {
+                display: flex;
+                flex-direction: column;
+            }
+
+            /* Mobile category styles */
+            .mobile-categories-view .categories {
+                flex: 1;
+                padding: 12px;
+            }
+
+            /* Mobile notes list */
+            .mobile-notes-view .notes-header {
+                padding: 16px;
+                border-bottom: 1px solid #3e3e42;
+            }
+
+            .mobile-notes-view .notes {
+                flex: 1;
+                overflow-y: auto;
+            }
+
+            /* Mobile chat placeholder */
+            .mobile-chat-view {
+                align-items: center;
+                justify-content: center;
+            }
+
+            .chat-placeholder {
+                text-align: center;
+                color: #858585;
+            }
+
+            .chat-placeholder-icon {
+                font-size: 48px;
+                margin-bottom: 16px;
+                opacity: 0.5;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container" id="app" style="display: none;">
+        <!-- Mobile Header -->
+        <div class="mobile-header">
+            <h1>📚 Knowledge Base</h1>
+            <button class="hamburger-btn" id="hamburgerBtn">☰</button>
+        </div>
+
+        <!-- Mobile Views -->
+        <div class="mobile-categories-view active" id="mobileCategoriesView">
+            <div class="categories" id="mobileCategoriesList">
+                <div class="loading">Loading categories...</div>
+            </div>
+        </div>
+
+        <div class="mobile-notes-view" id="mobileNotesView">
+            <div class="notes-header">
+                <button class="back-btn" id="btnBackToCategories">← Back</button>
+                <h2 id="mobileNotesListTitle">All Notes</h2>
+                <button class="btn-new" id="btnNewNoteMobile">+ New</button>
+            </div>
+            <div class="notes" id="mobileNotesList">
+                <div class="empty-state">
+                    <div class="empty-state-icon">📝</div>
+                    <div class="empty-state-text">No notes found</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mobile-editor-view" id="mobileEditorView">
+            <div class="mobile-editor-header">
+                <div style="display: flex; align-items: center;">
+                    <button class="back-btn" id="btnBackToNotes">← Back</button>
+                    <span class="unsaved-indicator" id="unsavedIndicator"></span>
+                </div>
+                <div class="mobile-editor-actions">
+                    <button class="btn btn-danger" id="btnDeleteMobile">Delete</button>
+                    <button class="btn btn-primary" id="btnSaveMobile">Save</button>
+                </div>
+            </div>
+            <div class="mobile-editor-content">
+                <input type="text" class="editor-title" id="noteTitleMobile" placeholder="Note title...">
+                <div class="mobile-editor-meta">
+                    <span class="metadata-label">Category:</span>
+                    <span class="metadata-value" id="noteCategoryMobile"></span>
+                </div>
+                <div class="mobile-editor-meta">
+                    <span class="metadata-label">Tags:</span>
+                    <input type="text" class="tags-input" id="noteTagsMobile" placeholder="comma, separated, tags">
+                </div>
+                <textarea class="editor-textarea" id="noteContentMobile" placeholder="Start writing..."></textarea>
+            </div>
+        </div>
+
+        <div class="mobile-chat-view" id="mobileChatView">
+            <div class="chat-placeholder">
+                <div class="chat-placeholder-icon">💬</div>
+                <div>Chat coming soon</div>
+            </div>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav" id="bottomNav">
+            <div class="bottom-nav-tabs">
+                <button class="bottom-nav-tab active" data-view="categories">
+                    <span class="tab-icon">📁</span>
+                    <span>Categories</span>
+                </button>
+                <button class="bottom-nav-tab" data-view="notes">
+                    <span class="tab-icon">📝</span>
+                    <span>Notes</span>
+                </button>
+                <button class="bottom-nav-tab" data-view="chat">
+                    <span class="tab-icon">💬</span>
+                    <span>Chat</span>
+                </button>
+            </div>
+        </nav>
+
         <!-- Sidebar -->
         <div class="sidebar">
             <div class="sidebar-header">

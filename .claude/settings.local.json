@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(sqlite3:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []

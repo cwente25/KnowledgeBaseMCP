@@ -7,14 +7,17 @@ let currentCategory = null;
 let currentNote = null;
 let isDirty = false;
 let authToken = localStorage.getItem('auth_token');
+let currentView = 'categories'; // 'categories', 'notes', 'chat'
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
-    if (authToken) {
-        initializeApp();
-    } else {
-        showLoginModal();
+    // Auth is disabled - skip login and initialize directly
+    // Set a dummy token to satisfy API calls
+    if (!authToken) {
+        authToken = 'disabled';
+        localStorage.setItem('auth_token', authToken);
     }
+    initializeApp();
     setupEventListeners();
 });
 
@@ -35,10 +38,6 @@ function setupEventListeners() {
     document.getElementById('btnDelete')?.addEventListener('click', deleteNote);
     document.getElementById('searchBox')?.addEventListener('input', handleSearch);
 
-    // Track changes
-    document.getElementById('noteTitle')?.addEventListener('input', () => isDirty = true);
-    document.getElementById('noteContent')?.addEventListener('input', () => isDirty = true);
-    document.getElementById('noteTags')?.addEventListener('input', () => isDirty = true);
 
     // Close modals on background click
     document.getElementById('authModal')?.addEventListener('click', (e) => {
@@ -55,6 +54,62 @@ function setupEventListeners() {
             hideNewNoteModal();
         }
     });
+
+    // Mobile navigation
+    document.querySelectorAll('.bottom-nav-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            const view = tab.dataset.view;
+            showView(view);
+        });
+    });
+
+    // Mobile new note button
+    document.getElementById('btnNewNoteMobile')?.addEventListener('click', showNewNoteModal);
+
+    // Mobile back buttons
+    document.getElementById('btnBackToCategories')?.addEventListener('click', () => showView('categories'));
+    document.getElementById('btnBackToNotes')?.addEventListener('click', () => showView('notes'));
+
+    // Mobile editor buttons
+    document.getElementById('btnSaveMobile')?.addEventListener('click', saveNoteMobile);
+    document.getElementById('btnDeleteMobile')?.addEventListener('click', deleteNoteMobile);
+
+    // Track changes on mobile editor
+    document.getElementById('noteTitleMobile')?.addEventListener('input', () => setDirty(true));
+    document.getElementById('noteContentMobile')?.addEventListener('input', () => setDirty(true));
+    document.getElementById('noteTagsMobile')?.addEventListener('input', () => setDirty(true));
+
+    // Track changes on desktop editor
+    document.getElementById('noteTitle')?.addEventListener('input', () => setDirty(true));
+    document.getElementById('noteContent')?.addEventListener('input', () => setDirty(true));
+    document.getElementById('noteTags')?.addEventListener('input', () => setDirty(true));
+}
+
+// Set dirty state and update indicator
+function setDirty(value) {
+    isDirty = value;
+    const indicator = document.getElementById('unsavedIndicator');
+    if (indicator) {
+        indicator.classList.toggle('show', value);
+    }
+}
+
+// Mobile View Switching
+function showView(viewName) {
+    currentView = viewName;
+
+    // Update bottom nav tabs (editor doesn't have a tab, highlight notes)
+    document.querySelectorAll('.bottom-nav-tab').forEach(tab => {
+        const tabView = tab.dataset.view;
+        tab.classList.toggle('active', tabView === viewName || (viewName === 'editor' && tabView === 'notes'));
+    });
+
+    // Update mobile views
+    document.getElementById('mobileCategoriesView')?.classList.toggle('active', viewName === 'categories');
+    document.getElementById('mobileNotesView')?.classList.toggle('active', viewName === 'notes');
+    document.getElementById('mobileEditorView')?.classList.toggle('active', viewName === 'editor');
+    document.getElementById('mobileChatView')?.classList.toggle('active', viewName === 'chat');
+
 }
 
 // Authentication
@@ -219,10 +274,17 @@ async function apiCall(endpoint, options = {}) {
 }
 
 async function loadCategories() {
-    const data = await apiCall('/categories');
-    categories = data.categories;
-    renderCategories();
-    loadAllNotes();
+    try {
+        const data = await apiCall('/categories');
+        categories = data.categories || [];
+        renderCategories();
+        loadAllNotes();
+    } catch (error) {
+        console.error('Failed to load categories:', error);
+        // Still render empty state
+        categories = [];
+        renderCategories();
+    }
 }
 
 async function loadNotes(category = null) {
@@ -266,7 +328,7 @@ async function saveNote() {
         })
     });
 
-    isDirty = false;
+    setDirty(false);
     currentNote.title = title;
     currentNote.content = content;
     currentNote.tags = tags;
@@ -288,6 +350,62 @@ async function deleteNote() {
 
     currentNote = null;
     hideEditor();
+    loadNotes(currentCategory);
+    showSuccess('Note deleted successfully');
+}
+
+// Mobile-specific save/delete that use mobile editor fields
+async function saveNoteMobile() {
+    if (!currentNote) return;
+
+    const title = document.getElementById('noteTitleMobile').value.trim();
+    const content = document.getElementById('noteContentMobile').value;
+    const tagsInput = document.getElementById('noteTagsMobile').value;
+    const tags = tagsInput.split(',').map(t => t.trim()).filter(t => t);
+
+    if (!title) {
+        showError('Title is required');
+        return;
+    }
+
+    await apiCall(`/notes/${currentNote.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+            title,
+            content,
+            tags,
+            category: currentNote.category
+        })
+    });
+
+    setDirty(false);
+    currentNote.title = title;
+    currentNote.content = content;
+    currentNote.tags = tags;
+
+    // Sync desktop editor
+    document.getElementById('noteTitle').value = title;
+    document.getElementById('noteContent').value = content;
+    document.getElementById('noteTags').value = tags.join(', ');
+
+    loadNotes(currentCategory);
+    showSuccess('Note saved successfully');
+}
+
+async function deleteNoteMobile() {
+    if (!currentNote) return;
+
+    if (!confirm(`Are you sure you want to delete "${currentNote.title}"?`)) {
+        return;
+    }
+
+    await apiCall(`/notes/${currentNote.id}`, {
+        method: 'DELETE'
+    });
+
+    currentNote = null;
+    hideEditor();
+    showView('notes');
     loadNotes(currentCategory);
     showSuccess('Note deleted successfully');
 }
@@ -338,15 +456,20 @@ async function handleSearch(e) {
 // Render Functions
 function renderCategories() {
     const container = document.getElementById('categoriesList');
+    const mobileContainer = document.getElementById('mobileCategoriesList');
+
+    console.log('renderCategories called, categories:', categories.length, 'mobileContainer:', !!mobileContainer);
 
     if (categories.length === 0) {
-        container.innerHTML = '<div class="empty-state-text">No categories found</div>';
+        const emptyHtml = '<div class="empty-state-text">No categories found</div>';
+        if (container) container.innerHTML = emptyHtml;
+        if (mobileContainer) mobileContainer.innerHTML = emptyHtml;
         return;
     }
 
     const totalNotes = notes.length;
 
-    container.innerHTML = `
+    const categoriesHtml = `
         <div class="category ${currentCategory === null ? 'active' : ''}" data-category="">
             <span>📂 All Notes</span>
             <span class="category-count">${totalNotes}</span>
@@ -359,41 +482,58 @@ function renderCategories() {
         `).join('')}
     `;
 
-    // Add click handlers
-    container.querySelectorAll('.category').forEach(el => {
-        el.addEventListener('click', () => {
-            const category = el.dataset.category;
-            currentCategory = category || null;
+    container.innerHTML = categoriesHtml;
+    if (mobileContainer) mobileContainer.innerHTML = categoriesHtml;
 
-            container.querySelectorAll('.category').forEach(c => c.classList.remove('active'));
-            el.classList.add('active');
+    // Add click handlers to both containers
+    const addCategoryHandlers = (cont) => {
+        cont.querySelectorAll('.category').forEach(el => {
+            el.addEventListener('click', () => {
+                const category = el.dataset.category;
+                currentCategory = category || null;
 
-            if (category) {
-                loadNotes(category);
-            } else {
-                loadAllNotes();
-            }
+                // Update both desktop and mobile active states
+                document.querySelectorAll('.category').forEach(c => c.classList.remove('active'));
+                document.querySelectorAll(`.category[data-category="${category}"]`).forEach(c => c.classList.add('active'));
 
-            document.getElementById('notesListTitle').textContent =
-                category ? category.split('/').pop() : 'All Notes';
+                if (category) {
+                    loadNotes(category);
+                } else {
+                    loadAllNotes();
+                }
+
+                const title = category ? category.split('/').pop() : 'All Notes';
+                document.getElementById('notesListTitle').textContent = title;
+                const mobileTitle = document.getElementById('mobileNotesListTitle');
+                if (mobileTitle) mobileTitle.textContent = title;
+
+                // Switch to notes view on mobile
+                showView('notes');
+            });
         });
-    });
+    };
+
+    addCategoryHandlers(container);
+    if (mobileContainer) addCategoryHandlers(mobileContainer);
 }
 
 function renderNotes() {
     const container = document.getElementById('notesList');
+    const mobileContainer = document.getElementById('mobileNotesList');
 
     if (notes.length === 0) {
-        container.innerHTML = `
+        const emptyHtml = `
             <div class="empty-state">
                 <div class="empty-state-icon">📝</div>
                 <div class="empty-state-text">No notes found</div>
             </div>
         `;
+        container.innerHTML = emptyHtml;
+        if (mobileContainer) mobileContainer.innerHTML = emptyHtml;
         return;
     }
 
-    container.innerHTML = notes.map(note => `
+    const notesHtml = notes.map(note => `
         <div class="note-item ${currentNote?.id === note.id ? 'active' : ''}"
              data-note-id="${note.id}">
             <div class="note-title">${note.title}</div>
@@ -403,27 +543,37 @@ function renderNotes() {
         </div>
     `).join('');
 
-    // Add click handlers
-    container.querySelectorAll('.note-item').forEach(el => {
-        el.addEventListener('click', () => {
-            if (isDirty && !confirm('You have unsaved changes. Continue?')) {
-                return;
-            }
+    container.innerHTML = notesHtml;
+    if (mobileContainer) mobileContainer.innerHTML = notesHtml;
 
-            const noteId = el.dataset.noteId;
+    // Add click handlers to both containers
+    const addNoteHandlers = (cont) => {
+        cont.querySelectorAll('.note-item').forEach(el => {
+            el.addEventListener('click', () => {
+                if (isDirty && !confirm('You have unsaved changes. Continue?')) {
+                    return;
+                }
 
-            container.querySelectorAll('.note-item').forEach(n => n.classList.remove('active'));
-            el.classList.add('active');
+                const noteId = el.dataset.noteId;
 
-            loadNote(noteId);
+                // Update both desktop and mobile active states
+                document.querySelectorAll('.note-item').forEach(n => n.classList.remove('active'));
+                document.querySelectorAll(`.note-item[data-note-id="${noteId}"]`).forEach(n => n.classList.add('active'));
+
+                loadNote(noteId);
+            });
         });
-    });
+    };
+
+    addNoteHandlers(container);
+    if (mobileContainer) addNoteHandlers(mobileContainer);
 }
 
 function displayNote(note) {
     currentNote = note;
-    isDirty = false;
+    setDirty(false);
 
+    // Desktop editor
     document.getElementById('editorEmpty').style.display = 'none';
     document.getElementById('editorContent').style.display = 'flex';
 
@@ -431,13 +581,24 @@ function displayNote(note) {
     document.getElementById('noteCategory').textContent = note.category;
     document.getElementById('noteTags').value = note.tags.join(', ');
     document.getElementById('noteContent').value = note.content;
+
+    // Mobile editor
+    document.getElementById('noteTitleMobile').value = note.title;
+    document.getElementById('noteCategoryMobile').textContent = note.category;
+    document.getElementById('noteTagsMobile').value = note.tags.join(', ');
+    document.getElementById('noteContentMobile').value = note.content;
+
+    // Switch to editor view on mobile
+    if (window.innerWidth <= 768) {
+        showView('editor');
+    }
 }
 
 function hideEditor() {
     document.getElementById('editorEmpty').style.display = 'flex';
     document.getElementById('editorContent').style.display = 'none';
     currentNote = null;
-    isDirty = false;
+    setDirty(false);
 }
 
 // Modal Functions
