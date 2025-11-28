@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Knowledge Base</title>
     <style>
         * {
@@ -17,6 +19,19 @@
             height: 100vh;
             overflow: hidden;
             color: #e0e0e0;
+            /* Safe area support for iOS notch */
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+            /* Prevent iOS bounce scroll */
+            position: fixed;
+            width: 100%;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Prevent body scroll when modal is open */
+        body.modal-open {
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
         }
 
         .container {
@@ -31,6 +46,36 @@
             border-right: 1px solid #3e3e42;
             display: flex;
             flex-direction: column;
+            transition: width 0.3s ease, margin-left 0.3s ease;
+        }
+
+        .sidebar.collapsed {
+            width: 0;
+            margin-left: -280px;
+            overflow: hidden;
+        }
+
+        /* Sidebar overlay for tablets */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 199;
+        }
+
+        .sidebar-overlay.show {
+            display: block;
+        }
+
+        @media (min-width: 1025px) {
+            /* No overlay needed on desktop */
+            .sidebar-overlay {
+                display: none !important;
+            }
         }
 
         .sidebar-header {
@@ -38,11 +83,37 @@
             border-bottom: 1px solid #3e3e42;
         }
 
+        .sidebar-header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
         .sidebar-header h1 {
             font-size: 20px;
             font-weight: 600;
-            margin-bottom: 12px;
             color: #e0e0e0;
+        }
+
+        .toggle-sidebar-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: #858585;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        .toggle-sidebar-btn:hover {
+            color: #e0e0e0;
+        }
+
+        @media (min-width: 769px) {
+            .toggle-sidebar-btn {
+                display: block;
+            }
         }
 
         .search-box {
@@ -109,6 +180,19 @@
             border-right: 1px solid #3e3e42;
             display: flex;
             flex-direction: column;
+            min-width: 280px;
+        }
+
+        /* Desktop improvements */
+        @media (min-width: 1280px) {
+            .notes-list {
+                width: 360px;
+            }
+
+            .editor-content {
+                max-width: 900px;
+                margin: 0 auto;
+            }
         }
 
         .notes-header {
@@ -117,12 +201,43 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 12px;
+        }
+
+        .notes-header-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
         }
 
         .notes-header h2 {
             font-size: 16px;
             font-weight: 600;
             color: #e0e0e0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .show-sidebar-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: #858585;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        .show-sidebar-btn:hover {
+            color: #e0e0e0;
+        }
+
+        @media (max-width: 1024px) {
+            .show-sidebar-btn {
+                display: block;
+            }
         }
 
         .btn-new {
@@ -201,6 +316,14 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        @media (min-width: 1280px) {
+            .editor-header {
+                padding: 24px 32px;
+            }
         }
 
         .editor-title {
@@ -213,6 +336,13 @@
             border-radius: 4px;
             background: #1e1e1e;
             color: #e0e0e0;
+            min-width: 200px;
+        }
+
+        @media (min-width: 1280px) {
+            .editor-title {
+                font-size: 28px;
+            }
         }
 
         .editor-title:focus {
@@ -264,6 +394,14 @@
             display: flex;
             gap: 12px;
             border-bottom: 1px solid #3e3e42;
+            flex-wrap: wrap;
+        }
+
+        @media (min-width: 1280px) {
+            .editor-metadata {
+                padding: 0 32px 16px;
+                gap: 16px;
+            }
         }
 
         .metadata-item {
@@ -310,6 +448,12 @@
             overflow-y: auto;
         }
 
+        @media (min-width: 1280px) {
+            .editor-content {
+                padding: 32px;
+            }
+        }
+
         .editor-textarea {
             width: 100%;
             height: 100%;
@@ -321,6 +465,13 @@
             resize: none;
             background: #1e1e1e;
             color: #d4d4d4;
+        }
+
+        @media (min-width: 1280px) {
+            .editor-textarea {
+                font-size: 15px;
+                line-height: 1.7;
+            }
         }
 
         .empty-state {
@@ -356,6 +507,145 @@
             border-radius: 6px;
             margin: 12px;
             border: 1px solid #be1100;
+        }
+
+        /* Loading Skeleton */
+        .skeleton {
+            background: linear-gradient(90deg, #2a2d2e 25%, #3e3e42 50%, #2a2d2e 75%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s ease-in-out infinite;
+            border-radius: 4px;
+        }
+
+        @keyframes skeleton-loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .skeleton-category {
+            height: 48px;
+            margin-bottom: 4px;
+            border-radius: 6px;
+        }
+
+        .skeleton-note {
+            height: 60px;
+            margin-bottom: 1px;
+            border-radius: 0;
+        }
+
+        .skeleton-text {
+            height: 16px;
+            margin-bottom: 8px;
+        }
+
+        /* Offline Indicator */
+        .offline-indicator {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #f14c4c;
+            color: white;
+            text-align: center;
+            padding: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            z-index: 2000;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .offline-indicator.show {
+            display: block;
+        }
+
+        /* Pull-to-refresh indicator (mobile only) */
+        .pull-to-refresh {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .pull-to-refresh {
+                display: flex;
+                position: absolute;
+                top: -60px;
+                left: 0;
+                right: 0;
+                height: 60px;
+                align-items: center;
+                justify-content: center;
+                color: #858585;
+                font-size: 14px;
+                transition: transform 0.3s ease;
+            }
+        }
+
+        .pull-to-refresh.pulling {
+            transform: translateY(60px);
+        }
+
+        .pull-to-refresh .refresh-icon {
+            font-size: 20px;
+            margin-right: 8px;
+            transition: transform 0.3s ease;
+        }
+
+        .pull-to-refresh.releasing .refresh-icon {
+            transform: rotate(180deg);
+        }
+
+        /* Retry button */
+        .retry-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background: #0e639c;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            margin: 12px;
+        }
+
+        .retry-btn:hover {
+            background: #1177bb;
+        }
+
+        /* Smooth transitions for all interactive elements */
+        .category, .note-item, .btn, .bottom-nav-tab, .chat-send-btn, .message-action-btn {
+            transition: all 0.3s ease;
+        }
+
+        .modal {
+            transition: opacity 0.3s ease;
+        }
+
+        .modal.show {
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
         }
 
         /* Modal */
@@ -474,6 +764,8 @@
             background: #252526;
             border-top: 1px solid #3e3e42;
             z-index: 100;
+            /* Safe area support for iOS home indicator */
+            padding-bottom: env(safe-area-inset-bottom);
         }
 
         .bottom-nav-tabs {
@@ -582,15 +874,51 @@
             margin-top: 12px;
         }
 
-        /* Mobile Views */
+        /* Mobile Views - Hidden on desktop/tablet */
         .mobile-view {
             display: none;
             flex-direction: column;
             height: 100%;
         }
 
-        .mobile-view.active {
-            display: flex;
+        @media (min-width: 769px) {
+            /* Force hide all mobile views on tablet and desktop */
+            .mobile-categories-view,
+            .mobile-notes-view,
+            .mobile-chat-view,
+            .mobile-editor-view,
+            .mobile-header,
+            .bottom-nav {
+                display: none !important;
+            }
+        }
+
+        /* Tablet/Mobile Media Queries */
+        @media (max-width: 1024px) and (min-width: 769px) {
+            /* Tablet: Sidebar as overlay */
+            .sidebar {
+                position: absolute;
+                height: 100%;
+                z-index: 200;
+                box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
+            }
+
+            .sidebar.collapsed {
+                width: 0;
+                margin-left: -280px;
+            }
+
+            .notes-list {
+                width: 340px;
+            }
+
+            .editor-title {
+                font-size: 22px;
+            }
+
+            .editor-content {
+                padding: 24px;
+            }
         }
 
         /* Mobile Media Query */
@@ -622,7 +950,10 @@
                 display: none;
                 flex: 1;
                 overflow-y: auto;
-                padding-bottom: 60px; /* Space for bottom nav */
+                /* Space for bottom nav + safe area */
+                padding-bottom: calc(60px + env(safe-area-inset-bottom));
+                /* Prevent iOS bounce scroll on individual views */
+                overscroll-behavior: contain;
             }
 
             .mobile-categories-view.active,
@@ -666,11 +997,276 @@
                 margin-bottom: 16px;
                 opacity: 0.5;
             }
+
+            /* Chat styles */
+            .chat-container {
+                display: flex;
+                flex-direction: column;
+                height: 100%;
+            }
+
+            .chat-messages {
+                flex: 1;
+                overflow-y: auto;
+                padding: 16px;
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .chat-message {
+                max-width: 80%;
+                padding: 10px 14px;
+                border-radius: 12px;
+                font-size: 14px;
+                line-height: 1.5;
+                word-wrap: break-word;
+            }
+
+            .chat-message.user {
+                align-self: flex-end;
+                background: #0e639c;
+                color: white;
+                border-bottom-right-radius: 4px;
+            }
+
+            .chat-message.assistant {
+                align-self: flex-start;
+                background: #3e3e42;
+                color: #e0e0e0;
+                border-bottom-left-radius: 4px;
+            }
+
+            .chat-message-time {
+                font-size: 10px;
+                opacity: 0.7;
+                margin-top: 4px;
+            }
+
+            .chat-message.user .chat-message-time {
+                text-align: right;
+            }
+
+            .chat-input-container {
+                padding: 12px 16px;
+                border-top: 1px solid #3e3e42;
+                background: #252526;
+                display: flex;
+                gap: 8px;
+                align-items: flex-end;
+            }
+
+            .chat-input {
+                flex: 1;
+                padding: 10px 12px;
+                border: 1px solid #3e3e42;
+                border-radius: 8px;
+                background: #1e1e1e;
+                color: #e0e0e0;
+                font-size: 14px;
+                font-family: inherit;
+                resize: none;
+                max-height: 72px;
+                min-height: 40px;
+                line-height: 1.4;
+            }
+
+            .chat-input:focus {
+                outline: none;
+                border-color: #007acc;
+            }
+
+            .chat-send-btn {
+                padding: 10px 16px;
+                background: #0e639c;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 14px;
+                font-weight: 500;
+                min-height: 40px;
+            }
+
+            .chat-send-btn:hover:not(:disabled) {
+                background: #1177bb;
+            }
+
+            .chat-send-btn:disabled {
+                background: #3e3e42;
+                color: #858585;
+                cursor: not-allowed;
+            }
+
+            .chat-loading {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                padding: 8px 12px;
+                color: #858585;
+                font-size: 12px;
+            }
+
+            .chat-loading-dots {
+                display: flex;
+                gap: 4px;
+            }
+
+            .chat-loading-dots span {
+                width: 6px;
+                height: 6px;
+                background: #858585;
+                border-radius: 50%;
+                animation: chatBounce 1.4s infinite ease-in-out both;
+            }
+
+            .chat-loading-dots span:nth-child(1) { animation-delay: -0.32s; }
+            .chat-loading-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+            @keyframes chatBounce {
+                0%, 80%, 100% { transform: scale(0); }
+                40% { transform: scale(1); }
+            }
+
+            /* Tool activities */
+            .tool-activities {
+                margin-bottom: 8px;
+            }
+
+            .tool-activity {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                padding: 4px 0;
+                font-size: 12px;
+                color: #858585;
+                opacity: 0.8;
+            }
+
+            .tool-activity.completed {
+                opacity: 0.6;
+            }
+
+            .tool-icon {
+                font-size: 14px;
+                flex-shrink: 0;
+            }
+
+            .tool-text {
+                font-style: italic;
+            }
+
+            .assistant-content {
+                margin-top: 4px;
+            }
+
+            /* Typing indicator */
+            .chat-typing-indicator {
+                align-self: flex-start;
+                background: #3e3e42;
+                padding: 10px 14px;
+                border-radius: 12px;
+                border-bottom-left-radius: 4px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .typing-dots {
+                display: flex;
+                gap: 4px;
+            }
+
+            .typing-dots span {
+                width: 8px;
+                height: 8px;
+                background: #858585;
+                border-radius: 50%;
+                animation: typingBounce 1.4s infinite ease-in-out both;
+            }
+
+            .typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+            .typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+            .typing-dots span:nth-child(3) { animation-delay: 0s; }
+
+            @keyframes typingBounce {
+                0%, 60%, 100% { transform: translateY(0); }
+                30% { transform: translateY(-10px); }
+            }
+
+            /* Message action buttons */
+            .message-actions {
+                display: flex;
+                gap: 6px;
+                margin-top: 8px;
+                flex-wrap: wrap;
+            }
+
+            .message-action-btn {
+                padding: 4px 10px;
+                background: #2a2d2e;
+                color: #cccccc;
+                border: 1px solid #3e3e42;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 11px;
+                font-weight: 500;
+                transition: background 0.2s;
+            }
+
+            .message-action-btn:hover {
+                background: #3e3e42;
+                color: #e0e0e0;
+            }
+
+            /* Note link styles */
+            .note-link {
+                color: #4fc3f7;
+                text-decoration: underline;
+                cursor: pointer;
+                font-weight: 500;
+            }
+
+            .note-link:hover {
+                color: #29b6f6;
+            }
+
+            /* Note mentioned indicator */
+            .note-item.mentioned-in-chat {
+                border-left: 3px solid #4fc3f7;
+                background: rgba(79, 195, 247, 0.05);
+            }
+
+            .note-item.mentioned-in-chat .note-title::after {
+                content: '💬';
+                margin-left: 6px;
+                font-size: 11px;
+                opacity: 0.7;
+            }
+
+            /* Ask Claude button in editor */
+            .btn-ask-claude {
+                background: #7c4dff;
+                color: white;
+                border: none;
+            }
+
+            .btn-ask-claude:hover {
+                background: #6a3de8;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- Offline Indicator -->
+    <div class="offline-indicator" id="offlineIndicator">
+        ⚠️ You are offline. Some features may not work.
+    </div>
+
     <div class="container" id="app" style="display: none;">
+        <!-- Sidebar Overlay (for tablets) -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
         <!-- Mobile Header -->
         <div class="mobile-header">
             <h1>📚 Knowledge Base</h1>
@@ -679,6 +1275,10 @@
 
         <!-- Mobile Views -->
         <div class="mobile-categories-view active" id="mobileCategoriesView">
+            <div class="pull-to-refresh" id="pullToRefreshCategories">
+                <span class="refresh-icon">↓</span>
+                <span class="refresh-text">Pull to refresh</span>
+            </div>
             <div class="categories" id="mobileCategoriesList">
                 <div class="loading">Loading categories...</div>
             </div>
@@ -689,6 +1289,10 @@
                 <button class="back-btn" id="btnBackToCategories">← Back</button>
                 <h2 id="mobileNotesListTitle">All Notes</h2>
                 <button class="btn-new" id="btnNewNoteMobile">+ New</button>
+            </div>
+            <div class="pull-to-refresh" id="pullToRefreshNotes">
+                <span class="refresh-icon">↓</span>
+                <span class="refresh-text">Pull to refresh</span>
             </div>
             <div class="notes" id="mobileNotesList">
                 <div class="empty-state">
@@ -705,6 +1309,7 @@
                     <span class="unsaved-indicator" id="unsavedIndicator"></span>
                 </div>
                 <div class="mobile-editor-actions">
+                    <button class="btn btn-ask-claude" id="btnAskClaudeMobile">💬</button>
                     <button class="btn btn-danger" id="btnDeleteMobile">Delete</button>
                     <button class="btn btn-primary" id="btnSaveMobile">Save</button>
                 </div>
@@ -724,9 +1329,19 @@
         </div>
 
         <div class="mobile-chat-view" id="mobileChatView">
-            <div class="chat-placeholder">
-                <div class="chat-placeholder-icon">💬</div>
-                <div>Chat coming soon</div>
+            <div class="chat-container">
+                <div class="chat-messages" id="chatMessages">
+                    <!-- Messages will be rendered here -->
+                </div>
+                <div class="chat-input-container">
+                    <textarea
+                        class="chat-input"
+                        id="chatInput"
+                        placeholder="Type a message..."
+                        rows="1"
+                    ></textarea>
+                    <button class="chat-send-btn" id="chatSendBtn" disabled>Send</button>
+                </div>
             </div>
         </div>
 
@@ -749,11 +1364,14 @@
         </nav>
 
         <!-- Sidebar -->
-        <div class="sidebar">
+        <div class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div class="sidebar-header-top">
                     <h1>📚 Knowledge Base</h1>
-                    <button class="btn" id="btnLogout" style="padding: 4px 12px; font-size: 12px;">Logout</button>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <button class="btn" id="btnLogout" style="padding: 4px 12px; font-size: 12px;">Logout</button>
+                        <button class="toggle-sidebar-btn" id="toggleSidebarBtn" title="Hide sidebar">✕</button>
+                    </div>
                 </div>
                 <input type="text" class="search-box" id="searchBox" placeholder="Search notes...">
             </div>
@@ -765,7 +1383,10 @@
         <!-- Notes List -->
         <div class="notes-list">
             <div class="notes-header">
-                <h2 id="notesListTitle">All Notes</h2>
+                <div class="notes-header-left">
+                    <button class="show-sidebar-btn" id="showSidebarBtn" title="Show categories">☰</button>
+                    <h2 id="notesListTitle">All Notes</h2>
+                </div>
                 <button class="btn-new" id="btnNewNote">+ New</button>
             </div>
             <div class="notes" id="notesList">
@@ -786,6 +1407,7 @@
                 <div class="editor-header">
                     <input type="text" class="editor-title" id="noteTitle" placeholder="Note title...">
                     <div class="editor-actions">
+                        <button class="btn btn-ask-claude" id="btnAskClaude">💬 Ask Claude</button>
                         <button class="btn btn-danger" id="btnDelete">Delete</button>
                         <button class="btn btn-primary" id="btnSave">Save</button>
                     </div>
@@ -871,6 +1493,35 @@
             <div class="modal-actions">
                 <button class="btn" id="btnCancelNew">Cancel</button>
                 <button class="btn btn-primary" id="btnCreateNote">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Save Message as Note Modal -->
+    <div class="modal" id="saveMessageModal">
+        <div class="modal-content">
+            <div class="modal-header">Save Message as Note</div>
+            <div class="form-group">
+                <label class="form-label">Title</label>
+                <input type="text" class="form-input" id="saveMessageTitle" placeholder="Enter note title">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Category</label>
+                <select class="form-select" id="saveMessageCategory">
+                    <option value="">Select a category...</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Tags (optional)</label>
+                <input type="text" class="form-input" id="saveMessageTags" placeholder="comma, separated, tags">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Content (from message)</label>
+                <textarea class="form-input" id="saveMessageContent" rows="6" readonly style="resize: vertical;"></textarea>
+            </div>
+            <div class="modal-actions">
+                <button class="btn" id="btnCancelSaveMessage">Cancel</button>
+                <button class="btn btn-primary" id="btnSaveMessageAsNote">Save Note</button>
             </div>
         </div>
     </div>
